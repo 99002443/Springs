@@ -3,9 +3,11 @@ package com.bookapp.dao;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.bookapp.exception.BookNotFoundException;
 import com.bookapp.model.Book;
 @Service
 public class BookDAOImpl implements BookDAO {
@@ -16,26 +18,24 @@ public class BookDAOImpl implements BookDAO {
 	}
 
 	@Override
-	public List<Book> getByAuthor(String author) {
+	public List<Book> getByAuthor(String author) throws BookNotFoundException {
 		List<Book> newBookList = new ArrayList<>();
 		for(Book book : showBookList()) {
 			if(book.getAuthor().equals(author))
 				newBookList.add(book);
 		}
-		
+		if(newBookList.isEmpty())
+		{
+			throw new BookNotFoundException("Author not available");
+		}
 		return newBookList;
 	}
 
 	@Override
-	public List<Book> getByCategory(String category) {
-		List<Book> newBookList = new ArrayList<>();
-		for(Book book : showBookList()) {
-			if(book.getCategory().equals(category))
-				newBookList.add(book);
-			
-		}
+	public List<Book> getByCategory(String category) throws BookNotFoundException {
+		return showBookList().stream().filter((book)->book.getCategory().equals(category)).collect(Collectors.toList());
 		
-		return newBookList;
+		
 	}
 	private List<Book> showBookList(){
 		return Arrays.asList(new Book(1,"Learn Java","Kathy","Tech",900.0),
@@ -47,12 +47,12 @@ public class BookDAOImpl implements BookDAO {
 	}
  
 	@Override
-	public Book getById(int id) {
-		for(Book book:showBookList()) {
-			if(book.getBookId()==id)
-				return book;
-		}
-		return null;
+	public Book getById(int id) throws BookNotFoundException {
+		return showBookList()
+				.stream()
+				.filter((book)->book.getBookId()==id)
+				.findAny()
+				.orElseThrow(()->new BookNotFoundException("Id not found"));
 		
 	}
 
